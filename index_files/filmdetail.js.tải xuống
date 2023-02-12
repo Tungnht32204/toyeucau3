@@ -1,0 +1,131 @@
+//--Film Info
+jQuery(document).ready(function () {
+    // rating
+    var filmId = jQuery("#film_id").val();
+
+    function scorehint(score) {
+        var text = "";
+        switch (parseInt(score)) {
+            case 1:
+                text = "1/10";
+                break;
+            case 2:
+                text = "1/10";
+                break;
+            case 3:
+                text = "3/10";
+                break;
+            case 4:
+                text = "4/10";
+                break;
+            case 5:
+                text = "5/10";
+                break;
+            case 6:
+                text = "6/10";
+                break;
+            case 7:
+                text = "7/10";
+                break;
+            case 8:
+                text = "8/10";
+                break;
+            case 9:
+                text = "9/10";
+                break;
+            default:
+                text = "10/10";
+        }
+        return text;
+    }
+	function trigerBtnLoginClick() {
+		$('#btn-login .btn-login').click(function() {
+			jQuery.post('/user/formlogin?rel='+document.location, 
+			{
+				'email': $(".fancybox-inner #User_email").val(),
+				'password': $(".fancybox-inner #User_password").val()
+			},
+			function( data ) {
+				if(data != 'OK') {
+					$("#login_popup").html(data);
+					$.fancybox({
+						'content' : $("#login_popup").html(),
+						width: 400,
+						height: 600
+					});
+					trigerBtnLoginClick();
+				} else {
+					location.reload();
+				}
+			  
+			});
+			return false;
+		});
+	}
+    jQuery('#star').raty({
+        half:false,
+        noRatedMsg:"You have already rated this movies",
+        score:function () {
+            return jQuery(this).attr('data-score');
+        },
+
+        mouseover:function (score, evt) {
+            jQuery("#hint").html(scorehint(score));
+        },
+        mouseout:function (score, evt) {
+            jQuery("#hint").html("");
+        },
+        click:function (score, evt) {
+				jQuery.ajax({
+					'url':DC_URL+'/ajax.html',
+					xhrFields: { 
+						withCredentials: true 
+					},
+					'type':'POST',
+					'dataType':'JSON',
+					'data':{'action':'vote','type':'Rate','filmId':filmId,'score':score}
+				}).done(function (data) {
+					if (data.status) {
+						if (typeof data.ratePoint != 'undefined') {
+							jQuery('.box-rating .average').html(data.ratePoint);
+							jQuery('.box-rating #rate_count').html(data.rateCount);
+							jQuery('.box-rating #average').html(data.ratePoint);
+							jQuery('.box-rating #div_average').show();
+							$('#star').raty('score', data.ratePoint);
+							jQuery("#hint").html("");
+							$('#star').raty('readOnly', true);
+						}
+					} else {
+						$('#star').raty('readOnly', true);
+					}
+					//auto if _fxStatus==0
+				});
+			
+        }
+    });
+    if (filmId) {
+        jQuery.ajax({
+            'url':DC_URL+'/ajax.html',
+			xhrFields: { 
+				withCredentials: true 
+			},
+            'type':'POST',
+            'dataType':'JSON',
+			'data':{'action':'vote','type':'getRate','filmId':filmId}
+        }).done(function (data) {
+                if (data.status) {
+                    if (typeof data.ratePoint != 'undefined') {
+                        jQuery('.box-rating .average').html(data.ratePoint);
+                        jQuery('.box-rating #rate_count').html(data.rateCount);
+                        jQuery('.box-rating #average').html(data.ratePoint);
+                        jQuery('.box-rating #div_average').show();
+                        $('#star').raty('score', data.ratePoint);
+                        if (data.status == 1) {
+                            $('#star').raty('readOnly', true);
+                        }
+                    }
+                }
+                //auto if _fxStatus==0
+            });
+    }
+});
